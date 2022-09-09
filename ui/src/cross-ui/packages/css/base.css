@@ -1,0 +1,352 @@
+/* 关于主题色、icons、公用动画效果等的处理 */
+
+.h100 {
+    height: 100vh;
+}
+
+.h60 {
+    height: 60vh;
+}
+
+.h100p {
+    height: 100%;
+}
+
+html, body {
+    font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 14px;
+    padding: 0;
+    margin: 0;
+}
+
+.font12 {
+    font-size: 0.857142em
+}
+
+.font16 {
+    font-size: 1.142857em;
+}
+
+.font18 {
+    font-size: 1.285714em;
+}
+
+.font20 {
+    font-size: 1.428571em;
+}
+
+.font22 {
+    font-size: 1.571428em;
+}
+
+.font26 {
+    font-size: 1.857142em;
+}
+
+.font30 {
+    font-size: 2.142857em;
+}
+
+.font34 {
+    font-size: 2.428571em;
+}
+
+.font42 {
+    font-size: 3em;
+}
+
+.font52 {
+    font-size: 52px;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-red {
+    color: #ff2626;
+}
+
+.text-light {
+    color: #ffffff;
+}
+
+.text-blue {
+    color: #409EFF;
+}
+
+.text-green {
+    color: #67C23A;
+}
+
+.text-orange {
+    color: #FAAD14;
+}
+
+.text-dark {
+    color: #000000;
+}
+
+.red-bg {
+    background-color: #f5222d;
+}
+
+.blue-bg {
+    background-color: #409EFF !important;
+}
+
+.green-bg {
+    background-color: #67C23A !important;
+}
+
+.orange-bg {
+    background-color: #E6A23C !important;
+}
+
+.light-bg {
+    background-color: #ffffff;
+}
+
+.scale-bg {
+    background-color: #aaaaaa;
+}
+
+.gray-bg {
+    background-color: #a7aab2 !important;
+}
+
+.center {
+    margin: 0 auto;
+}
+
+.pointer, .iconfont {
+    cursor: pointer !important;
+}
+
+.move {
+    cursor: move;
+}
+
+.mt5 {
+    margin-top: 5px;
+}
+
+.mt10 {
+    margin-top: 10px;
+}
+
+.mt15 {
+    margin-top: 15px;
+}
+
+.mt20 {
+    margin-top: 20px;
+}
+
+.mb5 {
+    margin-bottom: 5px;
+}
+
+.mb10 {
+    margin-bottom: 10px;
+}
+
+.mb15 {
+    margin-bottom: 15px;
+}
+
+.mb20 {
+    margin-bottom: 20px;
+}
+
+.mg-0-5 {
+    margin: 0 5px;
+}
+
+.mg-0-10 {
+    margin: 0 10px;
+}
+
+.mr10 {
+    margin-right: 10px !important;
+}
+
+.mr16 {
+    margin-right: 16px;
+}
+
+.fl {
+    float: left;
+}
+
+.fr {
+    float: right;
+}
+
+.clear{
+    clear: both;
+}
+
+.w100 {
+    width: 100%;
+}
+
+.pd-0-10 {
+    padding: 0 10px;
+}
+
+.pd-0-20 {
+    padding: 0 20px;
+}
+
+.pd5 {
+    padding: 5px;
+}
+
+.pd10 {
+    padding: 10px;
+}
+
+.pd20 {
+    padding: 20px;
+}
+
+.mg5 {
+    margin: 5px !important;
+}
+
+.pd-5-0 {
+    padding: 5px 0;
+}
+
+.lh26 {
+    line-height: 26px;
+}
+
+.lh32 {
+    line-height: 32px;
+}
+
+.lh60 {
+    line-height: 60px;
+}
+
+.text-ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vertical-center {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+::-webkit-scrollbar {
+    width: .5em;
+    height: .5em;
+}
+
+::-webkit-scrollbar-track {
+    border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb, ::-webkit-scrollbar {
+    transition: all 1s;
+}
+
+::-webkit-scrollbar {
+    background: transparent;
+}
+
+.hide-scroll-bar::-webkit-scrollbar {
+    display: none !important; /* Chrome Safari */
+}
+
+.hide-scroll-bar {
+    scrollbar-width: none !important; /* firefox */
+    -ms-overflow-style: none !important; /* IE 10+ */
+}
+
+.play {
+    color: rgba(255, 255, 255, 0.7);
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.play i {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#rsg-root th {
+    text-align: left;
+}
+
+#rsg-root td {
+    vertical-align: unset;
+}
+
+.border-radius0 {
+    border-radius: 0 !important;
+}
+
+.pd-10-10-0-10 {
+    padding: 10px 10px 0 10px;
+}
+
+.disabled {
+    color: #999999;
+    cursor: not-allowed;
+}
+
+a.disabled:hover, a.disabled:visited{
+    color: #999999;
+    text-decoration: none;
+}
+
+.pre{
+    white-space: pre;
+}
+
+.iconfont {
+    padding: 4px;
+}
+.svg-icon {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.15em;
+    fill: currentColor;
+    overflow: hidden;
+}
+.noselect {
+    user-select: none;
+}
+/* @media screen and (max-width: 768px) {
+    .ant-btn-block {
+        width: 48.5% !important;
+    }
+
+    button[type=reset] {
+        float: right;
+    }
+} */
+
+.ant-layout-sider-has-trigger {
+    padding-bottom: 0 !important;
+}

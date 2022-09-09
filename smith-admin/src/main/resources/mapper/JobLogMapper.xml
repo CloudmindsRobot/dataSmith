@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloudminds.data.smith.dao.mapper.JobLogMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.cloudminds.data.smith.dao.entity.JobLog">
+        <id column="id" property="id" />
+        <result column="handler_id" property="handlerId" />
+        <result column="handler_name" property="handlerName" />
+        <result column="insert_num" property="insertNum" />
+        <result column="update_num" property="updateNum" />
+        <result column="delete_num" property="deleteNum" />
+        <result column="trigger_type" property="triggerType" />
+        <result column="result" property="result" />
+        <result column="cost_time" property="costTime" />
+        <result column="cause" property="cause" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, handler_id, handler_name, insert_num, update_num, delete_num, trigger_type, result, cost_time, cause, create_time, update_time
+    </sql>
+
+</mapper>

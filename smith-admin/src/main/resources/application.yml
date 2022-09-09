@@ -1,0 +1,49 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: data-smith-admin
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 1.0
+    clean-disabled: true
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/data_smith?useUnicode=true&characterEncoding=UTF-8&useSSL=false&autoReconnect=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-test-query: select 1
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: true
+      idle-timeout: 30000
+
+mybatis-plus:
+  mapper-locations: classpath:/mapper/*Mapper.xml
+  global-config:
+    banner: false
+    db-config:
+      id-type: 0
+      field-strategy: 1
+      table-underline: true
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+knife4j:
+  # swagger文档开关
+  switch: true
+
+logging:
+  level:
+    com.cloudminds.data.smith.dao: DEBUG
+
+feishu:
+  operation:
+    appId: xxxxxxxxxxxxxx
+    appSecret: xxxxxxxxxxxxxxxxxxxx
+
+

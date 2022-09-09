@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration scan="true" scanPeriod="20 seconds">
+
+    <substitutionProperty name="log.base" value="/logs/data-smith/data-smith-${hostname}"/>
+    <property name="FILE_LOG_PATTERN" value="%d [%thread] %-5level %logger{80}:%line - %msg%n"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </layout>
+    </appender>
+
+    <appender name="FILE_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${log.base}.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${log.base}.%d{yyyy-MM-dd}.log.gz</FileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <!-- 日志输出格式：%d表示日期时间，%thread表示线程名，%-5level：级别从左显示5个字符宽度 %logger{80} 表示logger名字最长80个字符，否则按照句点分割。%msg：日志消息，%n是换行符 -->
+        <encoder>
+            <Pattern>${FILE_LOG_PATTERN}</Pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!--错误日志，包括业务错误日志、系统错误日志，是所有错误日志的汇总 -->
+    <appender name="ERRORLOG_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 时间滚动输出 level为 ERROR 日志 -->
+        <File>${log.base}-error.log</File>
+        <!-- 如果是 true，⽇志被追加到⽂件结尾，如果是 false，清空现存⽂件 -->
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>${log.base}-error.%d{yyyy-MM-dd}.log.gzg</fileNamePattern>
+            <!-- keep 30 days' worth of history capped at 1GB total size -->
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+
+        <!-- 日志输出格式：%d表示日期时间，%thread表示线程名，%-5level：级别从左显示5个字符宽度 %logger{80} 表示logger名字最长80个字符，否则按照句点分割。%msg：日志消息，%n是换行符 -->
+        <encoder>
+            <Pattern>${FILE_LOG_PATTERN}</Pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE_APPENDER"/>
+        <appender-ref ref="ERRORLOG_APPENDER"/>
+    </root>
+
+</configuration>
+
