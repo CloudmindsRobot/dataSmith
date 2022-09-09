@@ -8,3 +8,7 @@ bin
 .mvn
 mvnw
 .gitattributes
+
+ui/node_modules/
+ui/package-lock.json
+
