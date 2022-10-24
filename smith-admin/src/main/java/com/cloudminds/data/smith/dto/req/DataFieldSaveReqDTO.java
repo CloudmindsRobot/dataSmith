@@ -38,6 +38,12 @@ public class DataFieldSaveReqDTO {
     @ApiModelProperty(value = "字段属性")
     private String property;
 
+    @ApiModelProperty(value = "同步状态，0未同步，1已同步, 2同步失败")
+    private Integer syncStatus;
+
+    @ApiModelProperty("同步失败原因")
+    private String syncCause;
+
     @NotNull
     @ApiModelProperty(value = "排序号")
     private Integer sortNo;

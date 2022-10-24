@@ -87,7 +87,7 @@ public interface DataTableMapper extends BaseMapper<DataTable> {
         Check.notNull(tableId, "数据表格ID不能为空");
         final DataTable updateDataTable = new DataTable();
         updateDataTable.setStatus(DataStatusEnum.DELETE.getValue());
-        updateDataTable.setSyncStatus(DataSyncStatusEnum.UN_SYNCHRONIZED.getValue());
+        updateDataTable.setSyncStatus(DataSyncStatusEnum.PENDING.getValue());
 
         // 更新条件
         final LambdaQueryWrapper<DataTable> wrapper = Wrappers.lambdaQuery();

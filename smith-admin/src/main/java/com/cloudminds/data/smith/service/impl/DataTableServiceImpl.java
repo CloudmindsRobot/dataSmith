@@ -14,6 +14,7 @@ import com.cloudminds.data.smith.dto.event.DataTableChangeEvent;
 import com.cloudminds.data.smith.dto.req.DataFieldSaveReqDTO;
 import com.cloudminds.data.smith.dto.req.DataTableQueryReqDTO;
 import com.cloudminds.data.smith.dto.req.DataTableSaveReqDTO;
+import com.cloudminds.data.smith.dto.resp.DataFieldSyncRespDTO;
 import com.cloudminds.data.smith.dto.resp.DataTableDetailRespDTO;
 import com.cloudminds.data.smith.dto.resp.DataTableItemRespDTO;
 import com.cloudminds.data.smith.exception.ParameterException;
@@ -23,6 +24,7 @@ import com.cloudminds.data.smith.service.JobExecutorService;
 import com.cloudminds.data.smith.util.Check;
 import com.cloudminds.data.smith.util.Lists;
 import com.cloudminds.data.smith.util.Springs;
+import com.cloudminds.data.smith.util.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -30,7 +32,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -96,7 +101,7 @@ public class DataTableServiceImpl implements DataTableService {
 
         final DataTable saveTable = BeanUtil.copyProperties(saveReqDTO, DataTable.class);
         saveTable.setUpdateTime(System.currentTimeMillis());
-        saveTable.setSyncStatus(DataSyncStatusEnum.UN_SYNCHRONIZED.getValue());
+        saveTable.setSyncStatus(DataSyncStatusEnum.PENDING.getValue());
         if (saveTable.getId() == null) {
             // 新增
             Check.isTrue(existTable == null, "应用已存在相同表格名称，请修改名称后提交");
@@ -156,16 +161,13 @@ public class DataTableServiceImpl implements DataTableService {
         }
 
         // 判断是否有重复的名称
-        final int fieldSize = fields.size();
-        final Set<String> nameSet = fields.stream().map(e -> e.getFieldName()).collect(Collectors.toSet());
-        final boolean duplicateFlag = Objects.equals(fieldSize, nameSet.size());
-        Check.isTrue(duplicateFlag, "字段列名重复，请检查后提交");
+        this.checkDuplicateFieldName(tableId, fields);
 
         final long now = System.currentTimeMillis();
         final List<Long> dataFieldIds = new ArrayList<>();
         for (final DataFieldSaveReqDTO saveReqDTO : fields) {
             final DataField saveDataField = BeanUtil.copyProperties(saveReqDTO, DataField.class);
-            saveDataField.setSyncStatus(DataSyncStatusEnum.UN_SYNCHRONIZED.getValue());
+            saveDataField.setSyncStatus(DataSyncStatusEnum.PENDING.getValue());
             saveDataField.setUpdateTime(now);
             if (saveDataField.getId() == null) {
                 saveDataField.setTableId(tableId);
@@ -181,13 +183,34 @@ public class DataTableServiceImpl implements DataTableService {
     }
 
     /**
+     * 检测重复字段
+     *
+     * @param tableId
+     * @param fields
+     */
+    private void checkDuplicateFieldName(final Long tableId, final List<DataFieldSaveReqDTO> fields) {
+        final List<DataField> dataFields = dataFieldMapper.findListByTableId(tableId);
+        final Map<String, Long> existNameMap = dataFields.stream().collect(Collectors.toMap(e -> e.getFieldName(), e -> e.getId()));
+        for (final DataFieldSaveReqDTO field : fields) {
+            final Long saveFieldId = field.getId() == null ? 0L : field.getId();
+            final String saveFieldName = field.getFieldName();
+            final Long existFieldId = existNameMap.get(saveFieldName);
+            if (existFieldId == null || Objects.equals(existFieldId, saveFieldId)) {
+                existNameMap.put(saveFieldName, saveFieldId);
+                continue;
+            }
+            throw new ParameterException("字段名【%s】重复，请检查后提交", saveFieldName);
+        }
+    }
+
+    /**
      * 同步表格
      *
      * @param dataTableId
      */
     private void syncDataTable(final Long dataTableId) {
         final DataTable dataTable = dataTableMapper.selectById(dataTableId);
-        if (dataTable == null || Objects.equals(dataTable.getSyncStatus(), DataSyncStatusEnum.SYNCHRONIZED.getValue())) {
+        if (dataTable == null || Objects.equals(dataTable.getSyncStatus(), DataSyncStatusEnum.SUCCESS.getValue())) {
             return;
         }
         if (Objects.equals(dataTable.getStatus(), DataStatusEnum.DELETE.getValue())) {
@@ -195,18 +218,26 @@ public class DataTableServiceImpl implements DataTableService {
             jobExecutorService.removeSchedule(dataTableId);
             // 删除记录
             dataTableMapper.deleteById(dataTable.getId());
-            // 删除表格
-            dataTableSyncService.deleteDataTable(dataTable);
+            // 删除表格, 不同步删除飞书表格
+            // dataTableSyncService.deleteDataTable(dataTable);
             log.info("【同步删除表格】tableId={}, appTableId={}, tableName={}", dataTable.getId(), dataTable.getAppTableId(), dataTable.getTableName());
             return;
         }
-        // 更新
-        final String appTableId = dataTableSyncService.syncDataTable(dataTable);
-        // 更新为已同步
+        // 更新同步状态
         final DataTable updateDataTable = new DataTable();
         updateDataTable.setId(dataTable.getId());
-        updateDataTable.setAppTableId(appTableId);
-        updateDataTable.setSyncStatus(DataSyncStatusEnum.SYNCHRONIZED.getValue());
+
+        try {
+            final String appTableId = dataTableSyncService.syncDataTable(dataTable);
+            updateDataTable.setAppTableId(appTableId);
+            updateDataTable.setSyncStatus(DataSyncStatusEnum.SUCCESS.getValue());
+            updateDataTable.setSyncCause("");
+        } catch (Exception e) {
+            log.error("同步数据表格出错", e);
+            final String cause = e.getMessage();
+            updateDataTable.setSyncStatus(DataSyncStatusEnum.FAIL.getValue());
+            updateDataTable.setSyncCause(Strings.maxLength(cause, 180));
+        }
         updateDataTable.setUpdateTime(System.currentTimeMillis());
         dataTableMapper.updateById(updateDataTable);
         log.info("【同步表格】tableId={},  tableName={}", dataTable.getId(), dataTable.getTableName());
@@ -250,14 +281,19 @@ public class DataTableServiceImpl implements DataTableService {
                 dataFieldSyncList.add(dataField);
             }
         }
-        final Map<Long, String> fieldIdMap = dataTableSyncService.syncBatchDataField(dataTable, dataFieldSyncList);
-        fieldIdMap.entrySet().forEach(entry -> {
+        final List<DataFieldSyncRespDTO> syncRespDTOList = dataTableSyncService.syncBatchDataField(dataTable, dataFieldSyncList);
+        syncRespDTOList.forEach(syncRespDTO -> {
             // 更新为已同步
             final DataField dataField = new DataField();
-            dataField.setId(entry.getKey());
-            dataField.setAppFieldId(entry.getValue());
-            dataField.setSyncStatus(DataSyncStatusEnum.SYNCHRONIZED.getValue());
+            dataField.setId(syncRespDTO.getFieldId());
+            dataField.setAppFieldId(syncRespDTO.getAppFieldId());
             dataField.setUpdateTime(System.currentTimeMillis());
+            if (Boolean.TRUE.equals(syncRespDTO.getFlag())) {
+                dataField.setSyncStatus(DataSyncStatusEnum.SUCCESS.getValue());
+            } else {
+                dataField.setSyncStatus(DataSyncStatusEnum.FAIL.getValue());
+                dataField.setSyncCause(Strings.maxLength(syncRespDTO.getCause(), 180));
+            }
             dataFieldMapper.updateById(dataField);
             log.info("【同步字段】fieldId={}, appFieldId={}", dataField.getId(), dataField.getAppFieldId());
         });

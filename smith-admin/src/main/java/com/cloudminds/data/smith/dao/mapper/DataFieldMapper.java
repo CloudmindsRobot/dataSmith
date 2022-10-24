@@ -46,7 +46,7 @@ public interface DataFieldMapper extends BaseMapper<DataField> {
     default List<DataField> findUnSyncListByTableId(final Long tableId) {
         Check.notNull(tableId, "数据表格ID不能为空", tableId);
         final LambdaQueryWrapper<DataField> wrapper = Wrappers.lambdaQuery();
-        wrapper.eq(DataField::getSyncStatus, DataSyncStatusEnum.UN_SYNCHRONIZED.getValue())
+        wrapper.eq(DataField::getSyncStatus, DataSyncStatusEnum.PENDING.getValue())
                 .eq(DataField::getTableId, tableId);
         wrapper.orderByAsc(DataField::getSortNo).orderByAsc(DataField::getId);
         final List<DataField> fieldList = this.selectList(wrapper);
@@ -63,7 +63,7 @@ public interface DataFieldMapper extends BaseMapper<DataField> {
         Check.notNull(tableId, "数据表格ID不能为空", tableId);
         final DataField updateDataField = new DataField();
         updateDataField.setStatus(DataStatusEnum.DELETE.getValue());
-        updateDataField.setSyncStatus(DataSyncStatusEnum.UN_SYNCHRONIZED.getValue());
+        updateDataField.setSyncStatus(DataSyncStatusEnum.PENDING.getValue());
 
         // 更新条件
         final LambdaQueryWrapper<DataField> wrapper = Wrappers.lambdaQuery();
@@ -82,7 +82,7 @@ public interface DataFieldMapper extends BaseMapper<DataField> {
     default Integer deleteUnSyncListByTableId(final Long tableId) {
         Check.notNull(tableId, "数据表格ID不能为空", tableId);
         final LambdaQueryWrapper<DataField> wrapper = Wrappers.lambdaQuery();
-        wrapper.eq(DataField::getSyncStatus, DataSyncStatusEnum.UN_SYNCHRONIZED.getValue())
+        wrapper.eq(DataField::getSyncStatus, DataSyncStatusEnum.PENDING.getValue())
                 .eq(DataField::getTableId, tableId)
                 .eq(DataField::getStatus, DataStatusEnum.DELETE.getValue());
         final int deleteNum = this.delete(wrapper);
@@ -101,7 +101,7 @@ public interface DataFieldMapper extends BaseMapper<DataField> {
         }
         final DataField updateDataField = new DataField();
         updateDataField.setStatus(DataStatusEnum.DELETE.getValue());
-        updateDataField.setSyncStatus(DataSyncStatusEnum.UN_SYNCHRONIZED.getValue());
+        updateDataField.setSyncStatus(DataSyncStatusEnum.PENDING.getValue());
 
         // 更新条件
         final LambdaQueryWrapper<DataField> wrapper = Wrappers.lambdaQuery();

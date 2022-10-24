@@ -12,6 +12,7 @@
         <result column="app_type" property="appType"/>
         <result column="app_table_id" property="appTableId"/>
         <result column="sync_status" property="syncStatus"/>
+        <result column="sync_cause" property="syncCause" /
         <result column="status" property="status"/>
         <result column="cron" property="cron"/>
         <result column="remark" property="remark"/>
@@ -22,7 +23,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id, table_name, data_model_id, app_id, app_name, app_type, app_table_id, sync_status, status, cron, remark, execute_time, create_time, update_time
+        id, table_name, data_model_id, app_id, app_name, app_type, app_table_id, sync_status, sync_cause, status, cron, remark, execute_time, create_time, update_time
     </sql>
 
 </mapper>

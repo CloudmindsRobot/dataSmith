@@ -13,9 +13,9 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum DataSyncStatusEnum {
 
-    UN_SYNCHRONIZED(0, "未同步"),
-    SYNCHRONIZED(1, "已同步"),
-    ;
+    PENDING(0, "未同步"),
+    SUCCESS(1, "已同步"),
+    FAIL(2, "同步失败");
 
     /**
      * 值

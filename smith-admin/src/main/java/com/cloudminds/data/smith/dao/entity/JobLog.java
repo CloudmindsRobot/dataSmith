@@ -50,7 +50,7 @@ public class JobLog implements Serializable {
     @ApiModelProperty(value = "触发类型，1手动触发，2自动触发")
     private Integer triggerType;
 
-    @ApiModelProperty(value = "执行结果，1成功，2失败")
+    @ApiModelProperty(value = "执行结果，0执行中，1成功，2失败")
     private Integer result;
 
     @ApiModelProperty(value = "耗时(ms)")

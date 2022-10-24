@@ -2,6 +2,7 @@ package com.cloudminds.data.smith.service;
 
 import com.cloudminds.data.smith.dao.entity.DataField;
 import com.cloudminds.data.smith.dao.entity.DataTable;
+import com.cloudminds.data.smith.dto.resp.DataFieldSyncRespDTO;
 import com.cloudminds.data.smith.external.feishu.bitable.dto.resp.TableRecordSyncRespDTO;
 
 import java.util.List;
@@ -38,7 +39,7 @@ public interface DataTableSyncService {
      * @param dataFields
      * @return
      */
-    Map<Long, String> syncBatchDataField(DataTable dataTable, List<DataField> dataFields);
+    List<DataFieldSyncRespDTO> syncBatchDataField(DataTable dataTable, List<DataField> dataFields);
 
     /**
      * 删除数据表格字段

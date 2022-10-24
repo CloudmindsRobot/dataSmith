@@ -50,8 +50,11 @@ public class DataTable implements Serializable {
     @ApiModelProperty(value = "外部业务表ID")
     private String appTableId;
 
-    @ApiModelProperty(value = "同步状态，0未同步，1已同步")
+    @ApiModelProperty(value = "同步状态，0未同步，1已同步, 2同步失败")
     private Integer syncStatus;
+
+    @ApiModelProperty("同步失败原因")
+    private String syncCause;
 
     @ApiModelProperty(value = "1正常, 9删除")
     private Integer status;

@@ -106,22 +106,30 @@ public class JobExecutorServiceImpl implements JobExecutorService, CommandLineRu
         jobLog.setHandlerId(dataTable.getId());
         jobLog.setHandlerName(dataTable.getTableName() + appName);
         jobLog.setTriggerType(triggerType);
+        jobLog.setUpdateTime(startTime);
         jobLog.setCreateTime(startTime);
+        jobLog.setResult(0);
+        jobLogMapper.insert(jobLog);
+
+        // 更新记录
+        final long executeTime = System.currentTimeMillis();
+        final JobLog updateJobLog = new JobLog();
+        updateJobLog.setId(jobLog.getId());
         try {
             final TableRecordSyncRespDTO syncRespDTO = this.execute(dataTable, lastExecuteTime);
-            jobLog.setInsertNum(syncRespDTO.getInsertNum());
-            jobLog.setUpdateNum(syncRespDTO.getUpdateNum());
-            jobLog.setDeleteNum(syncRespDTO.getDeleteNum());
-            jobLog.setResult(1);
+            updateJobLog.setInsertNum(syncRespDTO.getInsertNum());
+            updateJobLog.setUpdateNum(syncRespDTO.getUpdateNum());
+            updateJobLog.setDeleteNum(syncRespDTO.getDeleteNum());
+            updateJobLog.setResult(1);
         } catch (Exception e) {
-            jobLog.setResult(2);
-            jobLog.setCause(getStackTraceAsString(e));
+            updateJobLog.setResult(2);
+            updateJobLog.setCause(getStackTraceAsString(e));
             throw e;
         } finally {
             final long now = System.currentTimeMillis();
-            jobLog.setCostTime((int) (now - startTime));
-            jobLog.setUpdateTime(now);
-            jobLogMapper.insert(jobLog);
+            updateJobLog.setCostTime((int) (now - executeTime));
+            updateJobLog.setUpdateTime(now);
+            jobLogMapper.updateById(updateJobLog);
         }
     }
 

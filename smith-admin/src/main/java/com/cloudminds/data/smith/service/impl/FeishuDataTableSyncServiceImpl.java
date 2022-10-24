@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.cloudminds.data.smith.dao.entity.DataField;
 import com.cloudminds.data.smith.dao.entity.DataTable;
 import com.cloudminds.data.smith.dto.req.FieldPropertySaveReqDTO;
+import com.cloudminds.data.smith.dto.resp.DataFieldSyncRespDTO;
 import com.cloudminds.data.smith.exception.ParameterException;
 import com.cloudminds.data.smith.external.feishu.bitable.dto.FieldProperty;
 import com.cloudminds.data.smith.external.feishu.bitable.dto.req.*;
@@ -86,24 +87,23 @@ public class FeishuDataTableSyncServiceImpl implements DataTableSyncService {
     }
 
     @Override
-    public Map<Long, String> syncBatchDataField(final DataTable dataTable, final List<DataField> dataFields) {
+    public  List<DataFieldSyncRespDTO> syncBatchDataField(final DataTable dataTable, final List<DataField> dataFields) {
         if (Lists.isEmpty(dataFields)) {
-            return MapUtil.empty();
+            return new ArrayList<>();
         }
         // 查询当前表格所有字段数据
         final List<BiFieldItemRespDTO> existFieldList = biTableApiService.getFieldList(dataTable.getAppId(), dataTable.getAppTableId());
         final Map<String, BiFieldItemRespDTO> existFieldMap = Lists.toMap(existFieldList, BiFieldItemRespDTO::getFieldName);
 
-        final Map<Long, String> resultMap = new HashMap<>(dataFields.size());
-
+        final List<DataFieldSyncRespDTO> syncRespDTOList = new ArrayList<>(dataFields.size());
         // 飞书表格中第一个字段列，飞书会生成一个默认列，且无法删除
         final BiFieldItemRespDTO existFirstItem = existFieldList.get(0);
         final boolean isDefaultField = Strings.equals("多行文本", existFirstItem.getFieldName()) && Objects.equals(1, existFirstItem.getType());
 
         // 循环更新字段
         for (int i = 0, size = dataFields.size(); i < size; i++) {
+            final DataField dataField = dataFields.get(i);
             try {
-                final DataField dataField = dataFields.get(i);
                 final BiFieldSaveBodyReqDTO saveBodyReqDTO = new BiFieldSaveBodyReqDTO();
                 saveBodyReqDTO.setFieldName(dataField.getFieldName());
                 saveBodyReqDTO.setType(dataField.getType());
@@ -134,12 +134,13 @@ public class FeishuDataTableSyncServiceImpl implements DataTableSyncService {
                         respDTO = biTableApiService.updateField(dataTable.getAppId(), saveReqDTO);
                     }
                 }
-                resultMap.put(dataField.getId(), respDTO.getFieldId());
+                syncRespDTOList.add(new DataFieldSyncRespDTO(dataField.getId(), respDTO.getFieldId()));
             } catch (Exception e) {
                 log.error("同步飞书表格字段出错", e);
+                syncRespDTOList.add(new DataFieldSyncRespDTO(dataField.getId(), null, e.getMessage()));
             }
         }
-        return resultMap;
+        return syncRespDTOList;
     }
 
     @Override

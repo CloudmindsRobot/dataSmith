@@ -30,7 +30,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * 飞书多维表格API操作接口
@@ -47,9 +46,11 @@ public class BiTableApiService {
     public static final String BASE_URL = "https://open.feishu.cn/open-apis/bitable";
 
     /**
-     * 超过2KB，则不输出响应
+     * 超过1KB，则不输出响应
      */
-    private final int MAX_IGNORE_RESP_BYTES = 2 * 1024;
+    private final int MAX_IGNORE_RESP_BYTES = 1 * 1024;
+
+    private List<Integer> RETRY_ERROR_CODES = Lists.asList(1255040, 1254607);
 
     /**
      * 请求模板
@@ -160,19 +161,21 @@ public class BiTableApiService {
 
     /**
      * 创建字段
-     *
+     * 新增记录、修改记录、修改字段、新增字段、删除这种写入操作都不支持并发
      * @param appToken
      * @param saveReqDTO
      * @return
      */
     public BiFieldItemRespDTO createField(final String appToken, final BiFieldSaveReqDTO saveReqDTO) {
-        final String url = String.format(BASE_URL + "/v1/apps/%s/tables/%s/fields", appToken, saveReqDTO.getTableId());
-        final ParameterizedTypeReference<Resp<Map<String, BiFieldItemRespDTO>>> reference = new ParameterizedTypeReference<Resp<Map<String, BiFieldItemRespDTO>>>() {
-        };
-        final HttpEntity<BiFieldSaveBodyReqDTO> httpEntity = new HttpEntity<>(saveReqDTO.getSaveBody());
-        final ResponseEntity<Resp<Map<String, BiFieldItemRespDTO>>> response = restTemplate.exchange(url, HttpMethod.POST, httpEntity, reference);
-        final Map<String, BiFieldItemRespDTO> resultMap = this.getSuccessData(response.getBody());
-        return resultMap.get("field");
+        synchronized (saveReqDTO.getTableId().intern()) {
+            final String url = String.format(BASE_URL + "/v1/apps/%s/tables/%s/fields", appToken, saveReqDTO.getTableId());
+            final ParameterizedTypeReference<Resp<Map<String, BiFieldItemRespDTO>>> reference = new ParameterizedTypeReference<Resp<Map<String, BiFieldItemRespDTO>>>() {
+            };
+            final HttpEntity<BiFieldSaveBodyReqDTO> httpEntity = new HttpEntity<>(saveReqDTO.getSaveBody());
+            final ResponseEntity<Resp<Map<String, BiFieldItemRespDTO>>> response = restTemplate.exchange(url, HttpMethod.POST, httpEntity, reference);
+            final Map<String, BiFieldItemRespDTO> resultMap = this.getSuccessData(response.getBody());
+            return resultMap.get("field");
+        }
     }
 
     /**
@@ -183,16 +186,18 @@ public class BiTableApiService {
      * @return
      */
     public BiFieldItemRespDTO updateField(final String appToken, final BiFieldSaveReqDTO saveReqDTO) {
-        final String url = String.format(BASE_URL + "/v1/apps/%s/tables/%s/fields/%s", appToken, saveReqDTO.getTableId(), saveReqDTO.getFieldId());
-        final ParameterizedTypeReference<Resp<Map<String, BiFieldItemRespDTO>>> reference = new ParameterizedTypeReference<Resp<Map<String, BiFieldItemRespDTO>>>() {
-        };
-        final HttpEntity<BiFieldSaveBodyReqDTO> httpEntity = new HttpEntity<>(saveReqDTO.getSaveBody());
-        final ResponseEntity<Resp<Map<String, BiFieldItemRespDTO>>> response = restTemplate.exchange(url, HttpMethod.PUT, httpEntity, reference);
-        try {
-            final Map<String, BiFieldItemRespDTO> resultMap = this.getSuccessData(response.getBody());
-            return resultMap.get("field");
-        } catch (FeishuException e) {
-            log.warn("同步飞书字段出错, message={}", e.getMessage());
+        synchronized (saveReqDTO.getTableId().intern()) {
+            final String url = String.format(BASE_URL + "/v1/apps/%s/tables/%s/fields/%s", appToken, saveReqDTO.getTableId(), saveReqDTO.getFieldId());
+            final ParameterizedTypeReference<Resp<Map<String, BiFieldItemRespDTO>>> reference = new ParameterizedTypeReference<Resp<Map<String, BiFieldItemRespDTO>>>() {
+            };
+            final HttpEntity<BiFieldSaveBodyReqDTO> httpEntity = new HttpEntity<>(saveReqDTO.getSaveBody());
+            final ResponseEntity<Resp<Map<String, BiFieldItemRespDTO>>> response = restTemplate.exchange(url, HttpMethod.PUT, httpEntity, reference);
+            try {
+                final Map<String, BiFieldItemRespDTO> resultMap = this.getSuccessData(response.getBody());
+                return resultMap.get("field");
+            } catch (FeishuException e) {
+                log.warn("同步飞书字段出错, message={}", e.getMessage());
+            }
         }
         final BiFieldItemRespDTO itemRespDTO = new BiFieldItemRespDTO();
         itemRespDTO.setFieldId(saveReqDTO.getFieldId());
@@ -211,13 +216,15 @@ public class BiTableApiService {
      * @return
      */
     public Boolean deleteField(final String appToken, final String tableId, final String fieldId) {
-        final String url = String.format(BASE_URL + "/v1/apps/%s/tables/%s/fields/%s", appToken, tableId, fieldId);
-        final ResponseEntity<Resp> response = restTemplate.exchange(url, HttpMethod.DELETE, HttpEntity.EMPTY, Resp.class);
-        try {
-            final Map<String, Object> resultMap = (Map<String, Object>) this.getSuccessData(response.getBody());
-            return (Boolean) resultMap.get("deleted");
-        } catch (FeishuException e) {
-            log.warn("删除飞书字段出错, message={}", e.getMessage());
+        synchronized (tableId.intern()) {
+            final String url = String.format(BASE_URL + "/v1/apps/%s/tables/%s/fields/%s", appToken, tableId, fieldId);
+            final ResponseEntity<Resp> response = restTemplate.exchange(url, HttpMethod.DELETE, HttpEntity.EMPTY, Resp.class);
+            try {
+                final Map<String, Object> resultMap = (Map<String, Object>) this.getSuccessData(response.getBody());
+                return (Boolean) resultMap.get("deleted");
+            } catch (FeishuException e) {
+                log.warn("删除飞书字段出错, message={}", e.getMessage());
+            }
         }
         return false;
     }
@@ -255,8 +262,10 @@ public class BiTableApiService {
      * @return
      */
     public List<BiRecordItemRespDTO> insertBatchRecords(final String appToken, final String tableId, final TableRecordSaveReqDTO saveReqDTO) {
-        final String url = String.format(BASE_URL + "/v1/apps/%s/tables/%s/records/batch_create", appToken, tableId);
-        return saveBatchRecords(saveReqDTO, url);
+        synchronized (tableId.intern()) {
+            final String url = String.format(BASE_URL + "/v1/apps/%s/tables/%s/records/batch_create", appToken, tableId);
+            return this.syncBatchRecords(url, saveReqDTO);
+        }
     }
 
     /**
@@ -268,13 +277,24 @@ public class BiTableApiService {
      * @return
      */
     public List<BiRecordItemRespDTO> updateBatchRecords(final String appToken, final String tableId, final TableRecordSaveReqDTO saveReqDTO) {
-        final String url = String.format(BASE_URL + "/v1/apps/%s/tables/%s/records/batch_update", appToken, tableId);
+        synchronized (tableId.intern()) {
+            final String url = String.format(BASE_URL + "/v1/apps/%s/tables/%s/records/batch_update", appToken, tableId);
+            return this.syncBatchRecords(url, saveReqDTO);
+        }
+    }
 
+    /**
+     * 批量同步记录
+     *
+     * @param url
+     * @param saveReqDTO
+     * @return
+     */
+    private List<BiRecordItemRespDTO> syncBatchRecords(final String url, final TableRecordSaveReqDTO saveReqDTO) {
         /**
          *飞书更新数据内部逻辑是异步操作，下次更新时会触发同步处理，可能会产生上次数据未处理完的问题，产生try again later
          * 加上重试处理
          */
-
         // 最大重试次数
         final int maxRetry = 3;
         // 间隔时间3秒
@@ -286,11 +306,11 @@ public class BiTableApiService {
                 if (i == maxRetry || Strings.isNotEquals(FeishuErrorCodeEnum.TRY_AGAIN_LATER.getCode(), e.getCode())) {
                     throw e;
                 }
-                log.info("飞书更新记录异常，进行重试处理, tableId={}", tableId);
+                log.info("飞书更新记录异常，进行重试处理, url={}", url);
                 ThreadUtil.sleep(interval * (i + 1));
             }
         }
-        return saveBatchRecords(saveReqDTO, url);
+        return new ArrayList<>();
     }
 
     /**
@@ -346,10 +366,10 @@ public class BiTableApiService {
                     throw new FeishuException(FeishuErrorCodeEnum.TABLE_ERROR, "无权限操作，请设置多维表格应用权限");
                 }
                 // 504响应码转换
-                if (HttpStatus.GATEWAY_TIMEOUT == response.getStatusCode() && Strings.isNotBlank(body)) {
+                if (Strings.isNotBlank(body)) {
                     final Resp<Void> resp = JSONUtil.toBean(body, Resp.class);
-                    if (Objects.equals(1255040, resp.getCode())) {
-                        // 飞书接口响应Request timed out, please try again later
+                    if (RETRY_ERROR_CODES.contains(resp.getCode())) {
+                        // 飞书接口响应please try again later
                         throw new FeishuException(FeishuErrorCodeEnum.TRY_AGAIN_LATER, "飞书接口响应出错：" + resp.getMsg());
                     }
                 }

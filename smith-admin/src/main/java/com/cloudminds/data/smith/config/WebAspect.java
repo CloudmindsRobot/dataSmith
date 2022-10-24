@@ -36,9 +36,9 @@ public class WebAspect {
     private HttpServletRequest request;
 
     /**
-     * 超过10KB，则不输出响应
+     * 超过1KB，则不输出响应
      */
-    private final int MAX_IGNORE_RESP_BYTES = 10 * 1024;
+    private final int MAX_IGNORE_RESP_BYTES = 1 * 1024;
 
 
     /**

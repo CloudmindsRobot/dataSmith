@@ -13,6 +13,7 @@
         <result column="app_field_id" property="appFieldId" />
         <result column="property" property="property" />
         <result column="sync_status" property="syncStatus" />
+        <result column="sync_cause" property="syncCause" />
         <result column="status" property="status" />
         <result column="sort_no" property="sortNo" />
         <result column="create_time" property="createTime" />
@@ -21,7 +22,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id, table_id, field_key, field_name, primary_flag, type, app_field_id, property, sync_status, status, sort_no, create_time, update_time
+        id, table_id, field_key, field_name, primary_flag, type, app_field_id, property, sync_status, sync_cause, status, sort_no, create_time, update_time
     </sql>
 
 </mapper>
